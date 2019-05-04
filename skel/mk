@@ -1,0 +1,22 @@
+#!/bin/bash
+#
+# Main entry point
+#
+scriptdir=$(cd $(dirname "$0") && pwd)
+[ -z "$scriptdir" ] && exit 1
+
+# Check submodules...
+if [ -d "$scriptdir/.git" ] ; then
+  if [ -f "$scriptdir/.gitmodules" ] ; then
+    # Check if submodules are all there...
+    grep -E '^\s*path\s*=\s*' "$scriptdir"/.gitmodules | sed 's/^\s*path\s*=\s*//' | while read subpath
+    do
+      if [ ! -e "$scriptdir/$subpath/.git" ] ; then
+	(cd "$scriptdir" && git submodule update --init --recursive)
+	break
+      fi
+    done
+  fi
+fi
+
+time env MKMODULES=buildroot:genfs  MKSCRIPTNAME="$0" MKSCRIPTDIR="$scriptdir" $scriptdir/brutils/main.sh "$@"
